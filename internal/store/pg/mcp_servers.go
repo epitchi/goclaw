@@ -74,9 +74,10 @@ func (s *PGMCPServerStore) GetServerByName(ctx context.Context, name string) (*s
 func (s *PGMCPServerStore) scanServer(row *sql.Row) (*store.MCPServerData, error) {
 	var srv store.MCPServerData
 	var displayName, command, url, apiKey, toolPrefix *string
+	var args, headers, env *[]byte
 	err := row.Scan(
 		&srv.ID, &srv.Name, &displayName, &srv.Transport, &command,
-		&srv.Args, &url, &srv.Headers, &srv.Env,
+		&args, &url, &headers, &env,
 		&apiKey, &toolPrefix, &srv.TimeoutSec,
 		&srv.Settings, &srv.Enabled, &srv.CreatedBy, &srv.CreatedAt, &srv.UpdatedAt,
 	)
@@ -87,6 +88,9 @@ func (s *PGMCPServerStore) scanServer(row *sql.Row) (*store.MCPServerData, error
 	srv.Command = derefStr(command)
 	srv.URL = derefStr(url)
 	srv.ToolPrefix = derefStr(toolPrefix)
+	srv.Args = derefBytes(args)
+	srv.Headers = derefBytes(headers)
+	srv.Env = derefBytes(env)
 	if apiKey != nil && *apiKey != "" && s.encKey != "" {
 		decrypted, err := crypto.Decrypt(*apiKey, s.encKey)
 		if err != nil {
@@ -110,13 +114,14 @@ func (s *PGMCPServerStore) ListServers(ctx context.Context) ([]store.MCPServerDa
 	}
 	defer rows.Close()
 
-	var result []store.MCPServerData
+	result := make([]store.MCPServerData, 0)
 	for rows.Next() {
 		var srv store.MCPServerData
 		var displayName, command, url, apiKey, toolPrefix *string
+		var args, headers, env *[]byte
 		if err := rows.Scan(
 			&srv.ID, &srv.Name, &displayName, &srv.Transport, &command,
-			&srv.Args, &url, &srv.Headers, &srv.Env,
+			&args, &url, &headers, &env,
 			&apiKey, &toolPrefix, &srv.TimeoutSec,
 			&srv.Settings, &srv.Enabled, &srv.CreatedBy, &srv.CreatedAt, &srv.UpdatedAt,
 		); err != nil {
@@ -126,6 +131,9 @@ func (s *PGMCPServerStore) ListServers(ctx context.Context) ([]store.MCPServerDa
 		srv.Command = derefStr(command)
 		srv.URL = derefStr(url)
 		srv.ToolPrefix = derefStr(toolPrefix)
+		srv.Args = derefBytes(args)
+		srv.Headers = derefBytes(headers)
+		srv.Env = derefBytes(env)
 		if apiKey != nil && *apiKey != "" && s.encKey != "" {
 			if decrypted, err := crypto.Decrypt(*apiKey, s.encKey); err == nil {
 				srv.APIKey = decrypted
