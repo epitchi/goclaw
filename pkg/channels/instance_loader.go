@@ -1,0 +1,197 @@
+package channels
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"sync"
+	"time"
+
+	"github.com/nextlevelbuilder/goclaw/pkg/bus"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
+)
+
+// ChannelFactory creates a Channel from DB instance data.
+// name: channel name (registered in Manager, used in session keys).
+// creds: decrypted credentials JSON (token, API keys, etc.).
+// cfg: non-secret config JSONB (dm_policy, stream_mode, etc.).
+type ChannelFactory func(name string, creds json.RawMessage, cfg json.RawMessage,
+	msgBus *bus.MessageBus, pairingSvc store.PairingStore) (Channel, error)
+
+// InstanceLoader loads channel instances from the database and registers them with the Manager.
+// Follows the DynamicToolLoader pattern: LoadAll at startup, Reload on cache invalidation.
+type InstanceLoader struct {
+	store      store.ChannelInstanceStore
+	agentStore store.AgentStore
+	factories  map[string]ChannelFactory
+	manager    *Manager
+	msgBus     *bus.MessageBus
+	pairingSvc store.PairingStore
+	mu         sync.Mutex
+	loaded     map[string]struct{} // channel names managed by this loader
+}
+
+// NewInstanceLoader creates a new InstanceLoader.
+func NewInstanceLoader(
+	s store.ChannelInstanceStore,
+	agentStore store.AgentStore,
+	mgr *Manager,
+	msgBus *bus.MessageBus,
+	pairingSvc store.PairingStore,
+) *InstanceLoader {
+	return &InstanceLoader{
+		store:      s,
+		agentStore: agentStore,
+		factories:  make(map[string]ChannelFactory),
+		manager:    mgr,
+		msgBus:     msgBus,
+		pairingSvc: pairingSvc,
+		loaded:     make(map[string]struct{}),
+	}
+}
+
+// RegisterFactory registers a factory for a channel type (e.g., "telegram", "discord").
+func (l *InstanceLoader) RegisterFactory(channelType string, factory ChannelFactory) {
+	l.factories[channelType] = factory
+}
+
+// LoadAll loads all enabled channel instances from the database, creates channels, and registers them.
+func (l *InstanceLoader) LoadAll(ctx context.Context) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	instances, err := l.store.ListEnabled(ctx)
+	if err != nil {
+		return err
+	}
+
+	registered := 0
+	for _, inst := range instances {
+		// Don't start channels here — StartAll() will start them after all channels are registered.
+		if err := l.loadInstance(ctx, inst, false); err != nil {
+			slog.Error("failed to load channel instance",
+				"name", inst.Name, "type", inst.ChannelType, "error", err)
+			continue
+		}
+		registered++
+	}
+
+	if registered > 0 {
+		slog.Info("channel instances loaded from DB", "count", registered)
+	}
+	return nil
+}
+
+// Reload stops all managed channels, reloads from DB, and starts new ones.
+// Called on cache invalidation events.
+func (l *InstanceLoader) Reload(ctx context.Context) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	// Stop and unregister old channels
+	for name := range l.loaded {
+		if ch, ok := l.manager.GetChannel(name); ok {
+			if err := ch.Stop(ctx); err != nil {
+				slog.Warn("failed to stop channel instance on reload", "name", name, "error", err)
+			}
+		}
+		l.manager.UnregisterChannel(name)
+	}
+	l.loaded = make(map[string]struct{})
+
+	// Brief pause to let external APIs (e.g., Telegram getUpdates) release polling locks.
+	time.Sleep(500 * time.Millisecond)
+
+	// Reload from DB
+	instances, err := l.store.ListEnabled(ctx)
+	if err != nil {
+		slog.Error("failed to reload channel instances", "error", err)
+		return
+	}
+
+	registered := 0
+	for _, inst := range instances {
+		// Reload must start channels immediately (StartAll was called at boot, not again).
+		if err := l.loadInstance(ctx, inst, true); err != nil {
+			slog.Error("failed to reload channel instance",
+				"name", inst.Name, "type", inst.ChannelType, "error", err)
+			continue
+		}
+		registered++
+	}
+
+	slog.Info("channel instances reloaded", "count", registered)
+}
+
+// Stop stops all managed channels.
+func (l *InstanceLoader) Stop(ctx context.Context) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for name := range l.loaded {
+		if ch, ok := l.manager.GetChannel(name); ok {
+			if err := ch.Stop(ctx); err != nil {
+				slog.Warn("failed to stop channel instance", "name", name, "error", err)
+			}
+		}
+		l.manager.UnregisterChannel(name)
+	}
+	l.loaded = make(map[string]struct{})
+}
+
+// LoadedNames returns the set of channel names managed by the loader.
+func (l *InstanceLoader) LoadedNames() map[string]struct{} {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	result := make(map[string]struct{}, len(l.loaded))
+	for k, v := range l.loaded {
+		result[k] = v
+	}
+	return result
+}
+
+// loadInstance creates and registers a single channel from a DB instance (caller must hold lock).
+// If autoStart is true, the channel is started immediately (used by Reload).
+// If false, the caller is responsible for starting (used by LoadAll, where StartAll handles it).
+func (l *InstanceLoader) loadInstance(ctx context.Context, inst store.ChannelInstanceData, autoStart bool) error {
+	factory, ok := l.factories[inst.ChannelType]
+	if !ok {
+		slog.Warn("no factory for channel type", "type", inst.ChannelType, "name", inst.Name)
+		return nil
+	}
+
+	ch, err := factory(inst.Name, inst.Credentials, inst.Config, l.msgBus, l.pairingSvc)
+	if err != nil {
+		return err
+	}
+	if ch == nil {
+		slog.Info("channel instance not ready (missing credentials)", "name", inst.Name, "type", inst.ChannelType)
+		return nil
+	}
+
+	// Resolve agent_key from UUID — the routing system (Router, session keys) uses agent_key, not UUID.
+	if base, ok := ch.(interface{ SetAgentID(string) }); ok {
+		ag, err := l.agentStore.GetByID(ctx, inst.AgentID)
+		if err != nil {
+			return fmt.Errorf("agent %s not found for channel %s: %w", inst.AgentID, inst.Name, err)
+		}
+		base.SetAgentID(ag.AgentKey)
+	}
+
+	l.manager.RegisterChannel(inst.Name, ch)
+	l.loaded[inst.Name] = struct{}{}
+
+	// Start the channel if requested (Reload path). LoadAll defers to StartAll.
+	if autoStart {
+		if err := ch.Start(ctx); err != nil {
+			slog.Error("channel instance start failed", "name", inst.Name, "error", err)
+			// Still registered — will show as not running.
+		}
+	}
+
+	slog.Info("channel instance loaded",
+		"name", inst.Name, "type", inst.ChannelType, "agent_id", inst.AgentID)
+	return nil
+}

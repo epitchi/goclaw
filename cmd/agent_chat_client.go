@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
-	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/sessions"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/sessions"
 	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
 )
 

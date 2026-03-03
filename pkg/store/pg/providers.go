@@ -1,0 +1,120 @@
+package pg
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/nextlevelbuilder/goclaw/pkg/crypto"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
+)
+
+// PGProviderStore implements store.ProviderStore backed by Postgres.
+type PGProviderStore struct {
+	db     *sql.DB
+	encKey string // AES-256 encryption key for API keys (empty = plain text)
+}
+
+func NewPGProviderStore(db *sql.DB, encryptionKey string) *PGProviderStore {
+	if encryptionKey != "" {
+		slog.Info("provider store: API key encryption enabled")
+	} else {
+		slog.Warn("provider store: API key encryption disabled (plain text storage)")
+	}
+	return &PGProviderStore{db: db, encKey: encryptionKey}
+}
+
+func (s *PGProviderStore) CreateProvider(ctx context.Context, p *store.LLMProviderData) error {
+	if p.ID == uuid.Nil {
+		p.ID = store.GenNewID()
+	}
+
+	apiKey := p.APIKey
+	if s.encKey != "" && apiKey != "" {
+		encrypted, err := crypto.Encrypt(apiKey, s.encKey)
+		if err != nil {
+			return fmt.Errorf("encrypt api key: %w", err)
+		}
+		apiKey = encrypted
+	}
+
+	now := time.Now()
+	p.CreatedAt = now
+	p.UpdatedAt = now
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO llm_providers (id, name, display_name, provider_type, api_base, api_key, enabled, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		p.ID, p.Name, p.DisplayName, p.ProviderType, p.APIBase, apiKey, p.Enabled, now, now,
+	)
+	return err
+}
+
+func (s *PGProviderStore) GetProvider(ctx context.Context, id uuid.UUID) (*store.LLMProviderData, error) {
+	var p store.LLMProviderData
+	var apiKey string
+	err := s.db.QueryRowContext(ctx,
+		`SELECT id, name, display_name, provider_type, api_base, api_key, enabled, created_at, updated_at
+		 FROM llm_providers WHERE id = $1`, id,
+	).Scan(&p.ID, &p.Name, &p.DisplayName, &p.ProviderType, &p.APIBase, &apiKey, &p.Enabled, &p.CreatedAt, &p.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("provider not found: %s", id)
+	}
+	p.APIKey = s.decryptKey(apiKey, p.Name)
+	return &p, nil
+}
+
+func (s *PGProviderStore) ListProviders(ctx context.Context) ([]store.LLMProviderData, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, name, display_name, provider_type, api_base, api_key, enabled, created_at, updated_at
+		 FROM llm_providers ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []store.LLMProviderData
+	for rows.Next() {
+		var p store.LLMProviderData
+		var apiKey string
+		if err := rows.Scan(&p.ID, &p.Name, &p.DisplayName, &p.ProviderType, &p.APIBase, &apiKey, &p.Enabled, &p.CreatedAt, &p.UpdatedAt); err != nil {
+			continue
+		}
+		p.APIKey = s.decryptKey(apiKey, p.Name)
+		result = append(result, p)
+	}
+	return result, nil
+}
+
+func (s *PGProviderStore) UpdateProvider(ctx context.Context, id uuid.UUID, updates map[string]any) error {
+	if apiKey, ok := updates["api_key"]; ok && s.encKey != "" {
+		if keyStr, ok := apiKey.(string); ok && keyStr != "" {
+			encrypted, err := crypto.Encrypt(keyStr, s.encKey)
+			if err != nil {
+				return fmt.Errorf("encrypt api key: %w", err)
+			}
+			updates["api_key"] = encrypted
+		}
+	}
+	return execMapUpdate(ctx, s.db, "llm_providers", id, updates)
+}
+
+func (s *PGProviderStore) DeleteProvider(ctx context.Context, id uuid.UUID) error {
+	_, err := s.db.ExecContext(ctx, "DELETE FROM llm_providers WHERE id = $1", id)
+	return err
+}
+
+func (s *PGProviderStore) decryptKey(apiKey, providerName string) string {
+	if s.encKey != "" && apiKey != "" {
+		decrypted, err := crypto.Decrypt(apiKey, s.encKey)
+		if err != nil {
+			slog.Warn("failed to decrypt provider API key", "provider", providerName, "error", err)
+			return apiKey
+		}
+		return decrypted
+	}
+	return apiKey
+}

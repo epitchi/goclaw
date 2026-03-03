@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 
 	"github.com/nextlevelbuilder/goclaw/pkg/agent"
-	"github.com/nextlevelbuilder/goclaw/internal/bootstrap"
-	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/store"
-	"github.com/nextlevelbuilder/goclaw/internal/store/file"
-	"github.com/nextlevelbuilder/goclaw/internal/tools"
+	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/nextlevelbuilder/goclaw/pkg/store/file"
+	"github.com/nextlevelbuilder/goclaw/pkg/tools"
 )
 
 // wireStandaloneExtras sets up standalone-mode components that mirror managed mode:

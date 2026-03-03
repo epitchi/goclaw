@@ -11,7 +11,7 @@ import (
 
 	"tailscale.com/tsnet"
 
-	"github.com/nextlevelbuilder/goclaw/internal/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
 )
 
 // initTailscale starts an additional Tailscale listener alongside the main gateway.

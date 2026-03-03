@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/nextlevelbuilder/goclaw/internal/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
 	"github.com/nextlevelbuilder/goclaw/pkg/providers"
 )
 

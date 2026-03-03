@@ -1,0 +1,232 @@
+package methods
+
+import (
+	"context"
+	"encoding/json"
+	"log/slog"
+
+	"github.com/titanous/json5"
+
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/gateway"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+)
+
+// ConfigMethods handles config.get, config.apply, config.patch, config.schema.
+// Matching TS src/gateway/server-methods/config.ts.
+type ConfigMethods struct {
+	cfg          *config.Config
+	cfgPath      string
+	managedMode  bool
+	secretsStore store.ConfigSecretsStore // nil in standalone mode
+}
+
+func NewConfigMethods(cfg *config.Config, cfgPath string, managedMode bool, secretsStore store.ConfigSecretsStore) *ConfigMethods {
+	return &ConfigMethods{cfg: cfg, cfgPath: cfgPath, managedMode: managedMode, secretsStore: secretsStore}
+}
+
+func (m *ConfigMethods) Register(router *gateway.MethodRouter) {
+	router.Register(protocol.MethodConfigGet, m.handleGet)
+	router.Register(protocol.MethodConfigApply, m.handleApply)
+	router.Register(protocol.MethodConfigPatch, m.handlePatch)
+	router.Register(protocol.MethodConfigSchema, m.handleSchema)
+}
+
+func (m *ConfigMethods) handleGet(_ context.Context, client *gateway.Client, req *protocol.RequestFrame) {
+	client.SendResponse(protocol.NewOKResponse(req.ID, map[string]interface{}{
+		"config": m.cfg.MaskedCopy(),
+		"hash":   m.cfg.Hash(),
+		"path":   m.cfgPath,
+	}))
+}
+
+// handleApply replaces the entire config with the provided JSON5 raw content.
+// Matching TS config.apply (src/gateway/server-methods/config.ts:435-486).
+func (m *ConfigMethods) handleApply(ctx context.Context, client *gateway.Client, req *protocol.RequestFrame) {
+	var params struct {
+		Raw      string `json:"raw"`
+		BaseHash string `json:"baseHash"`
+	}
+	if req.Params != nil {
+		json.Unmarshal(req.Params, &params)
+	}
+
+	if params.Raw == "" {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInvalidRequest, "raw config is required"))
+		return
+	}
+
+	// Optimistic concurrency: validate hash if provided
+	if params.BaseHash != "" && params.BaseHash != m.cfg.Hash() {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInvalidRequest, "config has changed (hash mismatch)"))
+		return
+	}
+
+	// Parse the new config
+	newCfg := config.Default()
+	if err := json5.Unmarshal([]byte(params.Raw), newCfg); err != nil {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInvalidRequest, "invalid config: "+err.Error()))
+		return
+	}
+
+	// Branch on mode for secrets handling
+	if m.managedMode {
+		// Managed mode: extract secrets → save to config_secrets table, strip all from file
+		m.saveSecretsToStore(ctx, newCfg)
+		newCfg.StripSecrets()
+	} else {
+		// Standalone mode: only strip masked values, keep real values
+		newCfg.StripMaskedSecrets()
+	}
+
+	// Save to disk
+	if err := config.Save(m.cfgPath, newCfg); err != nil {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInternal, "failed to save config: "+err.Error()))
+		return
+	}
+
+	// Update in-memory config and restore secrets
+	m.cfg.ReplaceFrom(newCfg)
+	if m.managedMode && m.secretsStore != nil {
+		if secrets, err := m.secretsStore.GetAll(ctx); err == nil {
+			m.cfg.ApplyDBSecrets(secrets)
+		}
+	}
+	m.cfg.ApplyEnvOverrides()
+
+	client.SendResponse(protocol.NewOKResponse(req.ID, map[string]interface{}{
+		"ok":      true,
+		"path":    m.cfgPath,
+		"config":  m.cfg.MaskedCopy(),
+		"hash":    m.cfg.Hash(),
+		"restart": false,
+	}))
+}
+
+// handlePatch merges a partial config update into the current config.
+// Matching TS config.patch (src/gateway/server-methods/config.ts:321-434).
+func (m *ConfigMethods) handlePatch(ctx context.Context, client *gateway.Client, req *protocol.RequestFrame) {
+	var params struct {
+		Raw      string `json:"raw"`
+		BaseHash string `json:"baseHash"`
+	}
+	if req.Params != nil {
+		json.Unmarshal(req.Params, &params)
+	}
+
+	if params.Raw == "" {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInvalidRequest, "raw patch is required"))
+		return
+	}
+
+	// Optimistic concurrency
+	if params.BaseHash != "" && params.BaseHash != m.cfg.Hash() {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInvalidRequest, "config has changed (hash mismatch)"))
+		return
+	}
+
+	// Merge strategy: serialize current -> deserialize patch on top -> save
+	currentJSON, err := json.Marshal(m.cfg)
+	if err != nil {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInternal, "failed to serialize current config"))
+		return
+	}
+
+	// Start from current config as base
+	merged := config.Default()
+	if err := json.Unmarshal(currentJSON, merged); err != nil {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInternal, "failed to clone config"))
+		return
+	}
+
+	// Apply patch on top
+	if err := json5.Unmarshal([]byte(params.Raw), merged); err != nil {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInvalidRequest, "invalid patch: "+err.Error()))
+		return
+	}
+
+	// Branch on mode for secrets handling
+	if m.managedMode {
+		m.saveSecretsToStore(ctx, merged)
+		merged.StripSecrets()
+	} else {
+		merged.StripMaskedSecrets()
+	}
+
+	// Save to disk
+	if err := config.Save(m.cfgPath, merged); err != nil {
+		client.SendResponse(protocol.NewErrorResponse(req.ID, protocol.ErrInternal, "failed to save config: "+err.Error()))
+		return
+	}
+
+	// Update in-memory config and restore secrets
+	m.cfg.ReplaceFrom(merged)
+	if m.managedMode && m.secretsStore != nil {
+		if secrets, err := m.secretsStore.GetAll(ctx); err == nil {
+			m.cfg.ApplyDBSecrets(secrets)
+		}
+	}
+	m.cfg.ApplyEnvOverrides()
+
+	client.SendResponse(protocol.NewOKResponse(req.ID, map[string]interface{}{
+		"ok":      true,
+		"path":    m.cfgPath,
+		"config":  m.cfg.MaskedCopy(),
+		"hash":    m.cfg.Hash(),
+		"restart": false,
+	}))
+}
+
+// handleSchema returns the config JSON schema for UI form generation.
+// Matching TS config.schema (src/gateway/server-methods/config.ts:276-289).
+func (m *ConfigMethods) handleSchema(_ context.Context, client *gateway.Client, req *protocol.RequestFrame) {
+	schema := map[string]interface{}{
+		"type": "object",
+		"properties": map[string]interface{}{
+			"agents": map[string]interface{}{
+				"type":        "object",
+				"description": "Agent configuration (defaults + per-agent overrides)",
+			},
+			"channels": map[string]interface{}{
+				"type":        "object",
+				"description": "Channel configuration (telegram, discord, slack, etc.)",
+			},
+			"providers": map[string]interface{}{
+				"type":        "object",
+				"description": "AI provider API keys and settings",
+			},
+			"gateway": map[string]interface{}{
+				"type":        "object",
+				"description": "Gateway server settings (host, port, token)",
+			},
+			"tools": map[string]interface{}{
+				"type":        "object",
+				"description": "Tool configuration (browser, exec, web search)",
+			},
+			"sessions": map[string]interface{}{
+				"type":        "object",
+				"description": "Session storage configuration",
+			},
+		},
+	}
+
+	client.SendResponse(protocol.NewOKResponse(req.ID, map[string]interface{}{
+		"json": schema,
+	}))
+}
+
+// saveSecretsToStore extracts non-LLM/non-channel secrets from the config
+// and persists them to the config_secrets table (managed mode only).
+func (m *ConfigMethods) saveSecretsToStore(ctx context.Context, cfg *config.Config) {
+	if m.secretsStore == nil {
+		return
+	}
+
+	secrets := cfg.ExtractDBSecrets()
+	for key, value := range secrets {
+		if err := m.secretsStore.Set(ctx, key, value); err != nil {
+			slog.Warn("failed to save config secret", "key", key, "error", err)
+		}
+	}
+}

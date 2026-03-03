@@ -1,0 +1,271 @@
+package telegram
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"net/url"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/mymmrac/telego"
+
+	"github.com/nextlevelbuilder/goclaw/pkg/bus"
+	"github.com/nextlevelbuilder/goclaw/pkg/channels"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
+)
+
+// Channel connects to Telegram via the Bot API using long polling.
+type Channel struct {
+	*channels.BaseChannel
+	bot              *telego.Bot
+	config           config.TelegramConfig
+	pairingService   store.PairingStore
+	agentStore       store.AgentStore // for group file writer management (nil in standalone)
+	teamStore        store.TeamStore  // for /tasks, /task_detail commands (nil in standalone)
+	placeholders     sync.Map         // localKey string → messageID int
+	stopThinking     sync.Map         // localKey string → *thinkingCancel
+	typingCtrls      sync.Map         // localKey string → *typing.Controller
+	streams          sync.Map         // localKey string → *DraftStream (streaming preview)
+	reactions        sync.Map         // localKey string → *StatusReactionController
+	pairingReplySent sync.Map         // userID string → time.Time (debounce pairing replies)
+	threadIDs        sync.Map         // localKey string → messageThreadID int (for forum topic routing)
+	approvedGroups   sync.Map         // chatIDStr string → true (cached group pairing approval)
+	groupHistory     *channels.PendingHistory
+	historyLimit     int
+	requireMention   bool
+	pollCancel       context.CancelFunc // cancels the long polling context
+	pollDone         chan struct{}       // closed when polling goroutine exits
+}
+
+type thinkingCancel struct {
+	fn context.CancelFunc
+}
+
+func (c *thinkingCancel) Cancel() {
+	if c != nil && c.fn != nil {
+		c.fn()
+	}
+}
+
+// New creates a new Telegram channel from config.
+// pairingSvc is optional (nil = fall back to allowlist only).
+// agentStore is optional (nil = group file writer commands disabled).
+// teamStore is optional (nil = /tasks, /task_detail commands disabled).
+func New(cfg config.TelegramConfig, msgBus *bus.MessageBus, pairingSvc store.PairingStore, agentStore store.AgentStore, teamStore store.TeamStore) (*Channel, error) {
+	var opts []telego.BotOption
+
+	if cfg.Proxy != "" {
+		proxyURL, parseErr := url.Parse(cfg.Proxy)
+		if parseErr != nil {
+			return nil, fmt.Errorf("invalid proxy URL %q: %w", cfg.Proxy, parseErr)
+		}
+		opts = append(opts, telego.WithHTTPClient(&http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			},
+		}))
+	}
+
+	bot, err := telego.NewBot(cfg.Token, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("create telegram bot: %w", err)
+	}
+
+	base := channels.NewBaseChannel("telegram", msgBus, cfg.AllowFrom)
+	base.ValidatePolicy(cfg.DMPolicy, cfg.GroupPolicy)
+
+	requireMention := true
+	if cfg.RequireMention != nil {
+		requireMention = *cfg.RequireMention
+	}
+
+	historyLimit := cfg.HistoryLimit
+	if historyLimit == 0 {
+		historyLimit = channels.DefaultGroupHistoryLimit
+	}
+
+	return &Channel{
+		BaseChannel:    base,
+		bot:            bot,
+		config:         cfg,
+		pairingService: pairingSvc,
+		agentStore:     agentStore,
+		teamStore:      teamStore,
+		groupHistory:   channels.NewPendingHistory(),
+		historyLimit:   historyLimit,
+		requireMention: requireMention,
+	}, nil
+}
+
+// Start begins long polling for Telegram updates.
+func (c *Channel) Start(ctx context.Context) error {
+	slog.Info("starting telegram bot (polling mode)")
+
+	// Create a cancellable context for the polling goroutine.
+	// Stop() cancels this context to cleanly shut down long polling.
+	pollCtx, cancel := context.WithCancel(ctx)
+	c.pollCancel = cancel
+	c.pollDone = make(chan struct{})
+
+	updates, err := c.bot.UpdatesViaLongPolling(pollCtx, &telego.GetUpdatesParams{
+		Timeout: 30,
+		AllowedUpdates: []string{
+			"message",
+			"edited_message",
+			"callback_query",
+			"my_chat_member",
+		},
+	})
+	if err != nil {
+		cancel()
+		return fmt.Errorf("start long polling: %w", err)
+	}
+
+	c.SetRunning(true)
+	slog.Info("telegram bot connected", "username", c.bot.Username())
+
+	// Register bot menu commands with retry.
+	go func() {
+		commands := DefaultMenuCommands()
+		for attempt := 1; attempt <= 3; attempt++ {
+			if err := c.SyncMenuCommands(pollCtx, commands); err != nil {
+				slog.Warn("failed to sync telegram menu commands", "error", err, "attempt", attempt)
+				if attempt < 3 {
+					select {
+					case <-pollCtx.Done():
+						return
+					case <-time.After(time.Duration(attempt*5) * time.Second):
+					}
+				}
+			} else {
+				slog.Info("telegram menu commands synced")
+				return
+			}
+		}
+	}()
+
+	go func() {
+		defer close(c.pollDone)
+		for {
+			select {
+			case <-pollCtx.Done():
+				return
+			case update, ok := <-updates:
+				if !ok {
+					slog.Info("telegram updates channel closed")
+					return
+				}
+				if update.Message != nil {
+					c.handleMessage(pollCtx, update)
+				} else if update.CallbackQuery != nil {
+					c.handleCallbackQuery(pollCtx, update.CallbackQuery)
+				} else {
+					// Log non-message updates for delivery diagnostics
+					updateType := "unknown"
+					switch {
+					case update.EditedMessage != nil:
+						updateType = "edited_message"
+					case update.ChannelPost != nil:
+						updateType = "channel_post"
+					case update.MyChatMember != nil:
+						updateType = "my_chat_member"
+					case update.ChatMember != nil:
+						updateType = "chat_member"
+					}
+					slog.Debug("telegram update skipped (no message)", "type", updateType, "update_id", update.UpdateID)
+				}
+			}
+		}
+	}()
+
+	return nil
+}
+
+// StreamEnabled reports whether streaming is active for this channel.
+// Returns true only when stream_mode is "partial".
+func (c *Channel) StreamEnabled() bool {
+	return c.config.StreamMode == "partial"
+}
+
+// Stop shuts down the Telegram bot by cancelling the long polling context
+// and waiting for the polling goroutine to exit.
+func (c *Channel) Stop(_ context.Context) error {
+	slog.Info("stopping telegram bot")
+	c.SetRunning(false)
+
+	if c.pollCancel != nil {
+		c.pollCancel()
+	}
+
+	// Wait for the polling goroutine to fully exit so that
+	// Telegram releases the getUpdates lock before a new instance starts.
+	if c.pollDone != nil {
+		select {
+		case <-c.pollDone:
+			slog.Info("telegram bot stopped")
+		case <-time.After(10 * time.Second):
+			slog.Warn("telegram polling goroutine did not exit within timeout")
+		}
+	}
+
+	return nil
+}
+
+// parseChatID converts a string chat ID to int64.
+func parseChatID(chatIDStr string) (int64, error) {
+	var id int64
+	_, err := fmt.Sscanf(chatIDStr, "%d", &id)
+	return id, err
+}
+
+// parseRawChatID extracts the numeric chat ID from a potentially composite localKey.
+// "-12345" → -12345, "-12345:topic:99" → -12345
+// TS ref: buildTelegramGroupPeerId() in src/telegram/bot/helpers.ts builds "{chatId}:topic:{topicId}".
+func parseRawChatID(key string) (int64, error) {
+	raw := key
+	if idx := strings.Index(key, ":topic:"); idx > 0 {
+		raw = key[:idx]
+	} else if idx := strings.Index(key, ":thread:"); idx > 0 {
+		raw = key[:idx]
+	}
+	return parseChatID(raw)
+}
+
+// CreateForumTopic creates a new forum topic in a supergroup.
+// Implements tools.ForumTopicCreator interface.
+func (c *Channel) CreateForumTopic(ctx context.Context, chatID int64, name string, iconColor int, iconEmojiID string) (int, string, error) {
+	params := &telego.CreateForumTopicParams{
+		ChatID: telego.ChatID{ID: chatID},
+		Name:   name,
+	}
+	if iconColor > 0 {
+		params.IconColor = iconColor
+	}
+	if iconEmojiID != "" {
+		params.IconCustomEmojiID = iconEmojiID
+	}
+
+	topic, err := c.bot.CreateForumTopic(ctx, params)
+	if err != nil {
+		return 0, "", fmt.Errorf("telegram API: %w", err)
+	}
+	return topic.MessageThreadID, topic.Name, nil
+}
+
+// telegramGeneralTopicID is the fixed topic ID for the "General" topic in forum supergroups.
+// TS ref: TELEGRAM_GENERAL_TOPIC_ID in src/telegram/bot/helpers.ts:12.
+const telegramGeneralTopicID = 1
+
+// resolveThreadIDForSend returns the thread ID for Telegram send/edit API calls.
+// General topic (1) must be omitted — Telegram rejects it with "thread not found".
+// TS ref: buildTelegramThreadParams() in src/telegram/bot/helpers.ts:127-143.
+func resolveThreadIDForSend(threadID int) int {
+	if threadID == telegramGeneralTopicID {
+		return 0
+	}
+	return threadID
+}

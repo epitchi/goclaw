@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 
-	"github.com/nextlevelbuilder/goclaw/internal/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
 	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
 )
 
