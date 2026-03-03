@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/providers"
+	"github.com/nextlevelbuilder/goclaw/pkg/providers"
 	"github.com/nextlevelbuilder/goclaw/internal/store"
 )
 

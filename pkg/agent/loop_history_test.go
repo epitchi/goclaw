@@ -3,7 +3,7 @@ package agent
 import (
 	"testing"
 
-	"github.com/nextlevelbuilder/goclaw/internal/providers"
+	"github.com/nextlevelbuilder/goclaw/pkg/providers"
 )
 
 func TestLimitHistoryTurns_NoLimit(t *testing.T) {

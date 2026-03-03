@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/providers"
+	"github.com/nextlevelbuilder/goclaw/pkg/providers"
 )
 
 // Default memory flush prompts matching TS memory-flush.ts.

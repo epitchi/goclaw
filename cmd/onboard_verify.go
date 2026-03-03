@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/providers"
+	"github.com/nextlevelbuilder/goclaw/pkg/providers"
 )
 
 // providerVerifyError holds the result of a provider connectivity probe.
