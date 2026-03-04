@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/config"
 )
 
 // resolvedTopicConfig holds the merged config for a specific group+topic combination.

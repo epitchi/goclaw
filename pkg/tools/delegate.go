@@ -10,10 +10,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
-	"github.com/nextlevelbuilder/goclaw/pkg/hooks"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	"github.com/nextlevelbuilder/goclaw/pkg/tracing"
+	"github.com/epitchi/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/hooks"
+	"github.com/epitchi/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/tracing"
 )
 
 const defaultMaxDelegationLoad = 5

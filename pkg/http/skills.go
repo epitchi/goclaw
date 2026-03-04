@@ -15,10 +15,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	"github.com/nextlevelbuilder/goclaw/pkg/store/pg"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/store/pg"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 const maxSkillUploadSize = 20 << 20 // 20 MB

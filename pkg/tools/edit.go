@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/sandbox"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/sandbox"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // EditTool performs search-and-replace edits on files.

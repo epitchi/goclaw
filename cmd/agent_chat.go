@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
-	"github.com/nextlevelbuilder/goclaw/pkg/sessions"
+	"github.com/epitchi/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/sessions"
 )
 
 func agentChatCmd() *cobra.Command {

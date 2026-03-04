@@ -9,7 +9,7 @@ import (
 
 	mcpclient "github.com/mark3labs/mcp-go/client"
 	mcpgo "github.com/mark3labs/mcp-go/mcp"
-	"github.com/nextlevelbuilder/goclaw/pkg/tools"
+	"github.com/epitchi/goclaw/pkg/tools"
 )
 
 // BridgeTool adapts an MCP tool into the tools.Tool interface.

@@ -10,10 +10,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	"github.com/nextlevelbuilder/goclaw/pkg/tools"
-	"github.com/nextlevelbuilder/goclaw/pkg/tracing"
+	"github.com/epitchi/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/tools"
+	"github.com/epitchi/goclaw/pkg/tracing"
 )
 
 func (l *Loop) emit(event AgentEvent) {

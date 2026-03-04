@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/providers"
 )
 
 // SessionData holds conversation state for one session.

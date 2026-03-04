@@ -2,9 +2,9 @@ package file
 
 import (
 	"github.com/google/uuid"
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
-	"github.com/nextlevelbuilder/goclaw/pkg/sessions"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/sessions"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // FileSessionStore wraps sessions.Manager to implement store.SessionStore.

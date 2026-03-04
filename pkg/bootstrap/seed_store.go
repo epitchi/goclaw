@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // SeedToStore seeds embedded templates into agent_context_files (agent-level).

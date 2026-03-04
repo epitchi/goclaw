@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/gateway"
-	"github.com/nextlevelbuilder/goclaw/pkg/tools"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/gateway"
+	"github.com/epitchi/goclaw/pkg/tools"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 // ExecApprovalMethods handles exec.approval.list, exec.approval.approve, exec.approval.deny.

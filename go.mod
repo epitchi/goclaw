@@ -1,4 +1,4 @@
-module github.com/nextlevelbuilder/goclaw
+module github.com/epitchi/goclaw
 
 go 1.25.5
 

@@ -12,9 +12,9 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/spf13/cobra"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
-	"github.com/nextlevelbuilder/goclaw/pkg/upgrade"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/upgrade"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 func doctorCmd() *cobra.Command {

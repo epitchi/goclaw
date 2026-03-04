@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // ============================================================

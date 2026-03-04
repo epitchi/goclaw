@@ -10,11 +10,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/bootstrap"
+	"github.com/epitchi/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 // Summoning event type constants.

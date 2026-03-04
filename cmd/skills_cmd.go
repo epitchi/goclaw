@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
-	"github.com/nextlevelbuilder/goclaw/pkg/skills"
+	"github.com/epitchi/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/skills"
 )
 
 func skillsCmd() *cobra.Command {

@@ -7,10 +7,10 @@ import (
 
 	"github.com/titanous/json5"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
-	"github.com/nextlevelbuilder/goclaw/pkg/gateway"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/gateway"
+	"github.com/epitchi/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 // ConfigMethods handles config.get, config.apply, config.patch, config.schema.

@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/agent"
-	"github.com/nextlevelbuilder/goclaw/pkg/sessions"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/agent"
+	"github.com/epitchi/goclaw/pkg/sessions"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // ChatCompletionsHandler handles POST /v1/chat/completions (OpenAI-compatible).

@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/crypto"
+	"github.com/epitchi/goclaw/pkg/crypto"
 )
 
 // PGConfigSecretsStore implements store.ConfigSecretsStore backed by Postgres.

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
+	"github.com/epitchi/goclaw/pkg/bootstrap"
 )
 
 // ManagerConfig configures the memory manager.

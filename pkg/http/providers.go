@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // ProvidersHandler handles LLM provider CRUD endpoints (managed mode).

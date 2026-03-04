@@ -9,9 +9,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
-	"github.com/nextlevelbuilder/goclaw/pkg/sandbox"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/bootstrap"
+	"github.com/epitchi/goclaw/pkg/sandbox"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // virtualSystemFiles are files dynamically injected into the system prompt.

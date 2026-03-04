@@ -13,8 +13,8 @@ import (
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
-	"github.com/nextlevelbuilder/goclaw/pkg/channels/typing"
+	"github.com/epitchi/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/channels/typing"
 )
 
 // Error patterns for graceful handling (matching TS error constants in send.ts).

@@ -10,11 +10,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
-	"github.com/nextlevelbuilder/goclaw/pkg/channels/zalo/personal/protocol"
-	"github.com/nextlevelbuilder/goclaw/pkg/gateway"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	goclawprotocol "github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/channels/zalo/personal/protocol"
+	"github.com/epitchi/goclaw/pkg/gateway"
+	"github.com/epitchi/goclaw/pkg/store"
+	goclawprotocol "github.com/epitchi/goclaw/pkg/protocol"
 )
 
 // QRMethods handles QR login for zalo_personal channel instances.

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/providers"
 )
 
 // Registry manages tool registration and execution.

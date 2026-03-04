@@ -3,12 +3,12 @@ package file
 import (
 	"fmt"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/cron"
-	"github.com/nextlevelbuilder/goclaw/pkg/memory"
-	"github.com/nextlevelbuilder/goclaw/pkg/pairing"
-	"github.com/nextlevelbuilder/goclaw/pkg/sessions"
-	"github.com/nextlevelbuilder/goclaw/pkg/skills"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/cron"
+	"github.com/epitchi/goclaw/pkg/memory"
+	"github.com/epitchi/goclaw/pkg/pairing"
+	"github.com/epitchi/goclaw/pkg/sessions"
+	"github.com/epitchi/goclaw/pkg/skills"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // NewFileStores creates all stores backed by filesystem/in-memory managers (standalone mode).

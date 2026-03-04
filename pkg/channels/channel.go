@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/bus"
 )
 
 // InternalChannels are system channels excluded from outbound dispatch.

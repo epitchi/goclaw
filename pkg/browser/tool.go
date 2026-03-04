@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/tools"
+	"github.com/epitchi/goclaw/pkg/tools"
 )
 
 // BrowserTool implements tools.Tool for browser automation.

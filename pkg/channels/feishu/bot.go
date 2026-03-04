@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/channels"
+	"github.com/epitchi/goclaw/pkg/channels"
 )
 
 // messageContext holds parsed information from a Feishu message event.

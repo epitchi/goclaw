@@ -3,8 +3,8 @@ package file
 import (
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/cron"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/cron"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // FileCronStore wraps cron.Service to implement store.CronStore.

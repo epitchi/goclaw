@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/memory"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/memory"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // MemorySearchTool implements the memory_search tool for hybrid semantic + FTS search.

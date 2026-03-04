@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/memory"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/memory"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // FileMemoryStore wraps memory.Manager to implement store.MemoryStore.

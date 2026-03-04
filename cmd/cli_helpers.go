@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/config"
 )
 
 // isManagedMode returns true if the config specifies managed (Postgres) mode.

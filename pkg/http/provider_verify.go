@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/providers"
 )
 
 // handleVerifyProvider tests a provider+model combination with a minimal LLM call.

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
+	"github.com/epitchi/goclaw/pkg/bootstrap"
 )
 
 // buildSandboxSection creates the "## Sandbox" section matching TS system-prompt.ts lines 476-519.

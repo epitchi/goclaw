@@ -1,8 +1,8 @@
 package file
 
 import (
-	"github.com/nextlevelbuilder/goclaw/pkg/skills"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/skills"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // FileSkillStore wraps skills.Loader to implement store.SkillStore.

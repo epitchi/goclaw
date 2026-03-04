@@ -13,17 +13,17 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/agent"
-	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
-	"github.com/nextlevelbuilder/goclaw/pkg/sessions"
-	"github.com/nextlevelbuilder/goclaw/pkg/skills"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	"github.com/nextlevelbuilder/goclaw/pkg/store/file"
-	"github.com/nextlevelbuilder/goclaw/pkg/tools"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/agent"
+	"github.com/epitchi/goclaw/pkg/bootstrap"
+	"github.com/epitchi/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/sessions"
+	"github.com/epitchi/goclaw/pkg/skills"
+	"github.com/epitchi/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/store/file"
+	"github.com/epitchi/goclaw/pkg/tools"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 func runStandaloneMode(cfg *config.Config, agentName, message, sessionKey string) {

@@ -1,6 +1,6 @@
 package tools
 
-import "github.com/nextlevelbuilder/goclaw/pkg/providers"
+import "github.com/epitchi/goclaw/pkg/providers"
 
 // Result is the unified return type from tool execution.
 type Result struct {

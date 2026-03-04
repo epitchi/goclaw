@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/providers"
 )
 
 // credentialProvider is a narrow interface for providers that expose API credentials.

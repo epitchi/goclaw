@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/config"
 )
 
 // newChannelWithSTT is a minimal Channel stub for STT unit tests.

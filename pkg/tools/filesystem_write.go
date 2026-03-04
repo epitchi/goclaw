@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/sandbox"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/sandbox"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // WriteFileTool writes content to a file, optionally through a sandbox container.

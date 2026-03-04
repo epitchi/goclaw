@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/sandbox"
+	"github.com/epitchi/goclaw/pkg/sandbox"
 )
 
 // ListFilesTool lists files in a directory, optionally through a sandbox container.

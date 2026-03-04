@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
+	"github.com/epitchi/goclaw/pkg/bootstrap"
 )
 
 // PromptMode controls which system prompt sections are included.

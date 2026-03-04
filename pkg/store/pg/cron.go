@@ -12,8 +12,8 @@ import (
 	"github.com/adhocore/gronx"
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/cron"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/cron"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 const defaultCronCacheTTL = 2 * time.Minute

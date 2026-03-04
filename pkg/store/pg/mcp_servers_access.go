@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/crypto"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/crypto"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // --- Agent Grants ---

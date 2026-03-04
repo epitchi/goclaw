@@ -9,19 +9,19 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/agent"
-	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
-	"github.com/nextlevelbuilder/goclaw/pkg/heartbeat"
-	"github.com/nextlevelbuilder/goclaw/pkg/memory"
-	"github.com/nextlevelbuilder/goclaw/pkg/providers"
-	"github.com/nextlevelbuilder/goclaw/pkg/sandbox"
-	"github.com/nextlevelbuilder/goclaw/pkg/skills"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	"github.com/nextlevelbuilder/goclaw/pkg/tools"
-	"github.com/nextlevelbuilder/goclaw/pkg/tts"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/agent"
+	"github.com/epitchi/goclaw/pkg/bootstrap"
+	"github.com/epitchi/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/heartbeat"
+	"github.com/epitchi/goclaw/pkg/memory"
+	"github.com/epitchi/goclaw/pkg/providers"
+	"github.com/epitchi/goclaw/pkg/sandbox"
+	"github.com/epitchi/goclaw/pkg/skills"
+	"github.com/epitchi/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/tools"
+	"github.com/epitchi/goclaw/pkg/tts"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 // createAgentLoop creates and registers an agent Loop for the given agent ID.

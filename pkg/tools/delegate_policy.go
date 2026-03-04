@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/hooks"
+	"github.com/epitchi/goclaw/pkg/hooks"
 )
 
 func checkUserPermission(settings json.RawMessage, userID string) error {

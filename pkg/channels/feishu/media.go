@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/bus"
 )
 
 // --- Image download ---

@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/channels/zalo/personal/protocol"
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/channels/zalo/personal/protocol"
+	"github.com/epitchi/goclaw/pkg/config"
 )
 
 // authenticate resolves credentials and returns an authenticated session.

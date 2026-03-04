@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/tts"
+	"github.com/epitchi/goclaw/pkg/tts"
 )
 
 // TtsTool is an agent tool that converts text to speech audio.

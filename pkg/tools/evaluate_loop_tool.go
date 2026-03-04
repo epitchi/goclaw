@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/hooks"
+	"github.com/epitchi/goclaw/pkg/hooks"
 )
 
 const (

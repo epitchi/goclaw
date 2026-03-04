@@ -3,7 +3,7 @@ package tools
 import (
 	"context"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/config"
 )
 
 // Tool execution context keys.

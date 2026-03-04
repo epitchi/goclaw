@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/channels/zalo/personal/protocol"
-	"github.com/nextlevelbuilder/goclaw/pkg/gateway"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
-	goclawprotocol "github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/channels/zalo/personal/protocol"
+	"github.com/epitchi/goclaw/pkg/gateway"
+	"github.com/epitchi/goclaw/pkg/store"
+	goclawprotocol "github.com/epitchi/goclaw/pkg/protocol"
 )
 
 // ContactsMethods handles fetching Zalo friends/groups for the picker UI.

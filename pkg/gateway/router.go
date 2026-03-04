@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/permissions"
-	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
+	"github.com/epitchi/goclaw/pkg/permissions"
+	"github.com/epitchi/goclaw/pkg/protocol"
 )
 
 // MethodHandler processes a single RPC method request.

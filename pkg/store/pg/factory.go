@@ -3,8 +3,8 @@ package pg
 import (
 	"fmt"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/config"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/config"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // NewPGStores creates all stores backed by Postgres (managed mode).

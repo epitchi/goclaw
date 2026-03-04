@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/skills"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/skills"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // SkillSearchTool implements the skill_search tool with BM25 search

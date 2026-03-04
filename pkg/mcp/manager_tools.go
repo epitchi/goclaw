@@ -3,7 +3,7 @@ package mcp
 import (
 	"log/slog"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/tools"
+	"github.com/epitchi/goclaw/pkg/tools"
 )
 
 // ToolNames returns all registered MCP tool names.

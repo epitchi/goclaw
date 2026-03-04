@@ -6,7 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/agent"
+	"github.com/epitchi/goclaw/pkg/agent"
 )
 
 // --- Scheduler ---

@@ -1,8 +1,8 @@
 package file
 
 import (
-	"github.com/nextlevelbuilder/goclaw/pkg/pairing"
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/pairing"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // FilePairingStore wraps pairing.Service to implement store.PairingStore.

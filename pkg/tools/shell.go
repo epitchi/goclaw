@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/sandbox"
+	"github.com/epitchi/goclaw/pkg/sandbox"
 )
 
 // Dangerous command patterns to deny by default.

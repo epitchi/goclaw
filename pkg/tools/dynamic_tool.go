@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/epitchi/goclaw/pkg/store"
 )
 
 // DynamicTool wraps a CustomToolDef from the database and implements the Tool interface.

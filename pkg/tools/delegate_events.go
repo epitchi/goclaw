@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/bus"
+	"github.com/epitchi/goclaw/pkg/bus"
 )
 
 func (dm *DelegateManager) emitEvent(name string, task *DelegationTask) {

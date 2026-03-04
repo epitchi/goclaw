@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw/pkg/channels/zalo/personal/protocol"
+	"github.com/epitchi/goclaw/pkg/channels/zalo/personal/protocol"
 )
 
 const pairingDebounce = 60 * time.Second
