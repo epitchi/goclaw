@@ -10,10 +10,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/cron"
-	"github.com/nextlevelbuilder/goclaw/internal/store"
-	"github.com/nextlevelbuilder/goclaw/internal/store/file"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/cron"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/nextlevelbuilder/goclaw/pkg/store/file"
 	"github.com/nextlevelbuilder/goclaw/pkg/protocol"
 )
 

@@ -10,13 +10,13 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/internal/agent"
-	"github.com/nextlevelbuilder/goclaw/internal/bus"
-	"github.com/nextlevelbuilder/goclaw/internal/channels"
-	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/scheduler"
-	"github.com/nextlevelbuilder/goclaw/internal/sessions"
-	"github.com/nextlevelbuilder/goclaw/internal/store"
+	"github.com/nextlevelbuilder/goclaw/pkg/agent"
+	"github.com/nextlevelbuilder/goclaw/pkg/bus"
+	"github.com/nextlevelbuilder/goclaw/pkg/channels"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/scheduler"
+	"github.com/nextlevelbuilder/goclaw/pkg/sessions"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
 )
 
 // makeSchedulerRunFunc creates the RunFunc for the scheduler.

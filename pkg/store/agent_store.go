@@ -1,0 +1,221 @@
+package store
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/google/uuid"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+)
+
+// Agent type constants.
+const (
+	AgentTypeOpen       = "open"       // per-user context files, seeded on first chat
+	AgentTypePredefined = "predefined" // shared agent-level context files
+)
+
+// Agent status constants.
+const (
+	AgentStatusActive      = "active"
+	AgentStatusInactive    = "inactive"
+	AgentStatusSummoning   = "summoning"
+	AgentStatusSummonFailed = "summon_failed"
+)
+
+// AgentData represents an agent in the database.
+type AgentData struct {
+	BaseModel
+	AgentKey            string `json:"agent_key"`
+	DisplayName         string `json:"display_name,omitempty"`
+	Frontmatter         string `json:"frontmatter,omitempty"` // short expertise summary (NOT other_config.description which is the summoning prompt)
+	OwnerID             string `json:"owner_id"`
+	Provider            string `json:"provider"`
+	Model               string `json:"model"`
+	ContextWindow       int    `json:"context_window"`
+	MaxToolIterations   int    `json:"max_tool_iterations"`
+	Workspace           string `json:"workspace"`
+	RestrictToWorkspace bool   `json:"restrict_to_workspace"`
+	AgentType           string `json:"agent_type"` // "open" or "predefined"
+	IsDefault           bool   `json:"is_default"`
+	Status              string `json:"status"`
+
+	// Per-agent JSONB config (nullable — nil means "use global defaults")
+	ToolsConfig      json.RawMessage `json:"tools_config,omitempty"`
+	SandboxConfig    json.RawMessage `json:"sandbox_config,omitempty"`
+	SubagentsConfig  json.RawMessage `json:"subagents_config,omitempty"`
+	MemoryConfig     json.RawMessage `json:"memory_config,omitempty"`
+	CompactionConfig json.RawMessage `json:"compaction_config,omitempty"`
+	ContextPruning   json.RawMessage `json:"context_pruning,omitempty"`
+	OtherConfig      json.RawMessage `json:"other_config,omitempty"`
+}
+
+// ParseToolsConfig returns per-agent tool policy, or nil if not configured.
+func (a *AgentData) ParseToolsConfig() *config.ToolPolicySpec {
+	if len(a.ToolsConfig) == 0 {
+		return nil
+	}
+	var c config.ToolPolicySpec
+	if json.Unmarshal(a.ToolsConfig, &c) != nil {
+		return nil
+	}
+	return &c
+}
+
+// ParseSubagentsConfig returns per-agent subagent config, or nil if not configured.
+func (a *AgentData) ParseSubagentsConfig() *config.SubagentsConfig {
+	if len(a.SubagentsConfig) == 0 {
+		return nil
+	}
+	var c config.SubagentsConfig
+	if json.Unmarshal(a.SubagentsConfig, &c) != nil {
+		return nil
+	}
+	return &c
+}
+
+// ParseCompactionConfig returns per-agent compaction config, or nil if not configured.
+func (a *AgentData) ParseCompactionConfig() *config.CompactionConfig {
+	if len(a.CompactionConfig) == 0 {
+		return nil
+	}
+	var c config.CompactionConfig
+	if json.Unmarshal(a.CompactionConfig, &c) != nil {
+		return nil
+	}
+	return &c
+}
+
+// ParseContextPruning returns per-agent context pruning config, or nil if not configured.
+func (a *AgentData) ParseContextPruning() *config.ContextPruningConfig {
+	if len(a.ContextPruning) == 0 {
+		return nil
+	}
+	var c config.ContextPruningConfig
+	if json.Unmarshal(a.ContextPruning, &c) != nil {
+		return nil
+	}
+	return &c
+}
+
+// ParseSandboxConfig returns per-agent sandbox config, or nil if not configured.
+func (a *AgentData) ParseSandboxConfig() *config.SandboxConfig {
+	if len(a.SandboxConfig) == 0 {
+		return nil
+	}
+	var c config.SandboxConfig
+	if json.Unmarshal(a.SandboxConfig, &c) != nil {
+		return nil
+	}
+	return &c
+}
+
+// ParseMemoryConfig returns per-agent memory config, or nil if not configured.
+func (a *AgentData) ParseMemoryConfig() *config.MemoryConfig {
+	if len(a.MemoryConfig) == 0 {
+		return nil
+	}
+	var c config.MemoryConfig
+	if json.Unmarshal(a.MemoryConfig, &c) != nil {
+		return nil
+	}
+	return &c
+}
+
+// ParseThinkingLevel extracts thinking_level from other_config JSONB.
+// Returns "" if not configured (meaning "off").
+func (a *AgentData) ParseThinkingLevel() string {
+	if len(a.OtherConfig) == 0 {
+		return ""
+	}
+	var cfg struct {
+		ThinkingLevel string `json:"thinking_level"`
+	}
+	if json.Unmarshal(a.OtherConfig, &cfg) != nil {
+		return ""
+	}
+	return cfg.ThinkingLevel
+}
+
+// AgentShareData represents an agent share grant.
+type AgentShareData struct {
+	BaseModel
+	AgentID   uuid.UUID `json:"agent_id"`
+	UserID    string    `json:"user_id"`
+	Role      string    `json:"role"`
+	GrantedBy string    `json:"granted_by"`
+}
+
+// AgentContextFileData represents an agent-level context file (SOUL.md, IDENTITY.md, etc).
+type AgentContextFileData struct {
+	AgentID  uuid.UUID `json:"agent_id"`
+	FileName string    `json:"file_name"`
+	Content  string    `json:"content"`
+}
+
+// UserContextFileData represents a per-user context file.
+type UserContextFileData struct {
+	AgentID  uuid.UUID `json:"agent_id"`
+	UserID   string    `json:"user_id"`
+	FileName string    `json:"file_name"`
+	Content  string    `json:"content"`
+}
+
+// UserAgentOverrideData represents per-user agent overrides.
+type UserAgentOverrideData struct {
+	AgentID  uuid.UUID `json:"agent_id"`
+	UserID   string    `json:"user_id"`
+	Provider string    `json:"provider,omitempty"`
+	Model    string    `json:"model,omitempty"`
+}
+
+// AgentStore manages agents and access control (managed mode only).
+type AgentStore interface {
+	Create(ctx context.Context, agent *AgentData) error
+	GetByKey(ctx context.Context, agentKey string) (*AgentData, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*AgentData, error)
+	Update(ctx context.Context, id uuid.UUID, updates map[string]any) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	List(ctx context.Context, ownerID string) ([]AgentData, error)
+	GetDefault(ctx context.Context) (*AgentData, error) // agent with is_default=true, or first available
+
+	// Access control
+	ShareAgent(ctx context.Context, agentID uuid.UUID, userID, role, grantedBy string) error
+	RevokeShare(ctx context.Context, agentID uuid.UUID, userID string) error
+	ListShares(ctx context.Context, agentID uuid.UUID) ([]AgentShareData, error)
+	CanAccess(ctx context.Context, agentID uuid.UUID, userID string) (bool, string, error) // (allowed, role, err)
+	ListAccessible(ctx context.Context, userID string) ([]AgentData, error)
+
+	// Agent-level context files
+	GetAgentContextFiles(ctx context.Context, agentID uuid.UUID) ([]AgentContextFileData, error)
+	SetAgentContextFile(ctx context.Context, agentID uuid.UUID, fileName, content string) error
+
+	// Per-user context files + overrides
+	GetUserContextFiles(ctx context.Context, agentID uuid.UUID, userID string) ([]UserContextFileData, error)
+	SetUserContextFile(ctx context.Context, agentID uuid.UUID, userID, fileName, content string) error
+	DeleteUserContextFile(ctx context.Context, agentID uuid.UUID, userID, fileName string) error
+	GetUserOverride(ctx context.Context, agentID uuid.UUID, userID string) (*UserAgentOverrideData, error)
+	SetUserOverride(ctx context.Context, override *UserAgentOverrideData) error
+
+	// User-agent profiles
+	GetOrCreateUserProfile(ctx context.Context, agentID uuid.UUID, userID, workspace, channel string) (isNew bool, effectiveWorkspace string, err error)
+
+	// Group file writers (allowlist for protected file edits in group chats)
+	IsGroupFileWriter(ctx context.Context, agentID uuid.UUID, groupID, userID string) (bool, error)
+	AddGroupFileWriter(ctx context.Context, agentID uuid.UUID, groupID, userID, displayName, username string) error
+	RemoveGroupFileWriter(ctx context.Context, agentID uuid.UUID, groupID, userID string) error
+	ListGroupFileWriters(ctx context.Context, agentID uuid.UUID, groupID string) ([]GroupFileWriterData, error)
+	ListGroupFileWriterGroups(ctx context.Context, agentID uuid.UUID) ([]GroupWriterGroupInfo, error)
+}
+
+// GroupFileWriterData represents a group file writer entry.
+type GroupFileWriterData struct {
+	UserID      string  `json:"user_id"`
+	DisplayName *string `json:"display_name,omitempty"`
+	Username    *string `json:"username,omitempty"`
+}
+
+// GroupWriterGroupInfo represents a group that has writers configured.
+type GroupWriterGroupInfo struct {
+	GroupID     string `json:"group_id"`
+	WriterCount int    `json:"writer_count"`
+}

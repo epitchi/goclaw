@@ -10,10 +10,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/nextlevelbuilder/goclaw/internal/bootstrap"
-	"github.com/nextlevelbuilder/goclaw/internal/config"
-	"github.com/nextlevelbuilder/goclaw/internal/store"
-	"github.com/nextlevelbuilder/goclaw/internal/store/pg"
+	"github.com/nextlevelbuilder/goclaw/pkg/bootstrap"
+	"github.com/nextlevelbuilder/goclaw/pkg/config"
+	"github.com/nextlevelbuilder/goclaw/pkg/store"
+	"github.com/nextlevelbuilder/goclaw/pkg/store/pg"
 )
 
 // testPostgresConnection verifies connectivity to Postgres with a 5s timeout.
