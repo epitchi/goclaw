@@ -15,9 +15,9 @@ const (
 	toolLoopCriticalThreshold = 5 // force stop the iteration loop
 )
 
-// toolLoopState tracks recent tool calls within a single agent run
+// ToolLoopDetector tracks recent tool calls within a single agent run
 // to detect infinite loops (same tool + same args + same result).
-type toolLoopState struct {
+type ToolLoopDetector struct {
 	history []toolCallRecord
 }
 
@@ -28,7 +28,7 @@ type toolCallRecord struct {
 }
 
 // record adds a tool call to history and returns its argsHash.
-func (s *toolLoopState) record(toolName string, args map[string]interface{}) string {
+func (s *ToolLoopDetector) Record(toolName string, args map[string]interface{}) string {
 	h := hashToolCall(toolName, args)
 	s.history = append(s.history, toolCallRecord{
 		toolName: toolName,
@@ -41,7 +41,7 @@ func (s *toolLoopState) record(toolName string, args map[string]interface{}) str
 }
 
 // recordResult updates the most recent matching record with the result hash.
-func (s *toolLoopState) recordResult(argsHash, resultContent string) {
+func (s *ToolLoopDetector) RecordResult(argsHash, resultContent string) {
 	rh := hashResult(resultContent)
 	// Walk backward to find the latest record with matching argsHash and no result yet.
 	for i := len(s.history) - 1; i >= 0; i-- {
@@ -55,7 +55,7 @@ func (s *toolLoopState) recordResult(argsHash, resultContent string) {
 
 // detect checks for repeated no-progress tool calls.
 // Returns level ("warning", "critical", or "") and a human-readable message.
-func (s *toolLoopState) detect(toolName string, argsHash string) (level, message string) {
+func (s *ToolLoopDetector) Detect(toolName string, argsHash string) (level, message string) {
 	if len(s.history) < toolLoopWarningThreshold {
 		return "", ""
 	}

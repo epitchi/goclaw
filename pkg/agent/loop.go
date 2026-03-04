@@ -574,7 +574,7 @@ func (l *Loop) runLoop(ctx context.Context, req RunRequest) (*RunResult, error) 
 	})
 
 	// 4. Run LLM iteration loop
-	var loopDetector toolLoopState // detects repeated no-progress tool calls
+	var loopDetector ToolLoopDetector // detects repeated no-progress tool calls
 	var totalUsage providers.Usage
 	iteration := 0
 	var finalContent string
@@ -777,7 +777,7 @@ func (l *Loop) runLoop(ctx context.Context, req RunRequest) (*RunResult, error) 
 			argsJSON, _ := json.Marshal(tc.Arguments)
 			slog.Info("tool call", "agent", l.id, "tool", tc.Name, "args_len", len(argsJSON))
 
-			argsHash := loopDetector.record(tc.Name, tc.Arguments)
+			argsHash := loopDetector.Record(tc.Name, tc.Arguments)
 
 			toolSpanStart := time.Now().UTC()
 			var result *tools.Result
@@ -791,7 +791,7 @@ func (l *Loop) runLoop(ctx context.Context, req RunRequest) (*RunResult, error) 
 			l.emitToolSpan(ctx, toolSpanStart, tc.Name, tc.ID, string(argsJSON), result)
 
 			// Record result for loop detection.
-			loopDetector.recordResult(argsHash, result.ForLLM)
+			loopDetector.RecordResult(argsHash, result.ForLLM)
 
 			if result.Async {
 				asyncToolCalls = append(asyncToolCalls, tc.Name)
@@ -843,7 +843,7 @@ func (l *Loop) runLoop(ctx context.Context, req RunRequest) (*RunResult, error) 
 			pendingMsgs = append(pendingMsgs, toolMsg)
 
 			// Check for tool call loop after recording result.
-			if level, msg := loopDetector.detect(tc.Name, argsHash); level != "" {
+			if level, msg := loopDetector.Detect(tc.Name, argsHash); level != "" {
 				if level == "critical" {
 					slog.Warn("tool loop critical", "agent", l.id, "tool", tc.Name, "message", msg)
 					finalContent = "I was unable to complete this task — I got stuck repeatedly calling " + tc.Name + " without making progress. Please try rephrasing your request."
@@ -917,8 +917,8 @@ func (l *Loop) runLoop(ctx context.Context, req RunRequest) (*RunResult, error) 
 				l.emitToolSpan(ctx, r.spanStart, r.tc.Name, r.tc.ID, r.argsJSON, r.result)
 
 				// Record for loop detection.
-				argsHash := loopDetector.record(r.tc.Name, r.tc.Arguments)
-				loopDetector.recordResult(argsHash, r.result.ForLLM)
+				argsHash := loopDetector.Record(r.tc.Name, r.tc.Arguments)
+				loopDetector.RecordResult(argsHash, r.result.ForLLM)
 
 				if r.result.Async {
 					asyncToolCalls = append(asyncToolCalls, r.tc.Name)
@@ -970,7 +970,7 @@ func (l *Loop) runLoop(ctx context.Context, req RunRequest) (*RunResult, error) 
 				pendingMsgs = append(pendingMsgs, toolMsg)
 
 				// Check for tool call loop.
-				if level, msg := loopDetector.detect(r.tc.Name, argsHash); level != "" {
+				if level, msg := loopDetector.Detect(r.tc.Name, argsHash); level != "" {
 					if level == "critical" {
 						slog.Warn("tool loop critical", "agent", l.id, "tool", r.tc.Name, "message", msg)
 						finalContent = "I was unable to complete this task — I got stuck repeatedly calling " + r.tc.Name + " without making progress. Please try rephrasing your request."
